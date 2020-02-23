@@ -1,6 +1,5 @@
 #include "systemc.h"
 #include "PE.cpp"
-#include "assert.h"
 
 using std::cout;
 using std::endl;
@@ -44,6 +43,7 @@ int sc_main(int argc, char *argv[])
      */
 
     sc_trace_file *wf = sc_create_vcd_trace_file("./src/traces/sim_signals.trace");
+    wf->set_time_unit(500, sc_core::SC_PS);
     sc_trace(wf, clk, "clk");
     sc_trace(wf, reset, "reset");
     sc_trace(wf, psumIn, "psumIn");
@@ -60,10 +60,18 @@ int sc_main(int argc, char *argv[])
     cout << "@ " << sc_time_stamp() << " Asserting reset" << endl;
     for (int i = 0; i < MAX_RESET_CYCLES; i++)
     {
+        /**
+         * @brief Since rest is level triggered, update will only be called once
+         * 
+         */
         sc_start(1, SC_NS); 
     }
     cout << "@ " << sc_time_stamp() << " Deasserting reset" << endl;
     reset = 0; 
+    psumIn = 1;
+    pixelIn0 = 1;
+    sc_start(1, SC_NS); 
+
     
     cout << "@ " << sc_time_stamp() << " Start Compute" << endl;
     for (int i = 0; i < MAX_SIM_CYCLES; i++)
@@ -75,6 +83,7 @@ int sc_main(int argc, char *argv[])
         clk = 1;
         sc_start(1, SC_NS);
         cout << "@ " << sc_time_stamp() << " psum_out: " << psumOut.read()  << endl;
+        assert(psumOut.read() == (i+1) + (i+1)*PE_CURRENT_WEIGHT);
     }
 
     cout << "@ " << sc_time_stamp() << " Done with compute, testing async reset" << endl;
