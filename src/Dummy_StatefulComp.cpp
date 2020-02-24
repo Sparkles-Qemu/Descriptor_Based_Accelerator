@@ -12,12 +12,24 @@ struct DummyStatefulComponent : StatefulComponent
     //------------Define Functions Here---------------------
     sc_out<sc_int< 32> > count_val;
 
+    /**
+     * @brief function automatically called on reset assertion
+     * main automatically restarts
+     * 
+     */
     void fn_reset()
     {
         cout << "@ " << sc_time_stamp() << " Dummy Reset" << endl;
         count_val.write(0);
     }
 
+    /**
+     * @brief Main loop thread. Will keep iterating indefinitely unless
+     * encounters a pause point that checks if enable is reset and pauses
+     * function or encounters a reset which will restart the function. Otherwise
+     * if no disable is received after the next n cycles will wake it up.
+     * 
+     */
     void fn_main()
     {
         cout << "@ " << sc_time_stamp() << " Dummy Writing " << count_val.read()+1 << endl;

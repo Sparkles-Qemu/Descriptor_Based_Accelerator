@@ -42,9 +42,19 @@ struct StatefulComponent : public sc_module
 
     //------------Code Starts Here-------------------------
 
-    void wait_on_clk_or_pause_if_disable()
+
+    /**
+     * @brief Waits for n-cycles before checking if not paused. If paused and
+     * unpaused briefly while waiting for n-cycles effect is the same. fn_main
+     * continue as if nothing happened because effectively the external
+     * controller of enable wants the module to continue.
+     * 
+     * @param cycles Number of cycles before continuing fn_main or checking for
+     * and pausing
+     */
+    void wait_on_clk_or_pause_if_disable(unsigned int cycles)
     {
-        wait();
+        wait(cycles);
         if(enable.read() == false)
         {
             while(true)
@@ -90,7 +100,6 @@ struct StatefulComponent : public sc_module
     {
         SC_THREAD(main_thread);
         sensitive << clk.pos();
-        // sensitive << reset;
         sensitive << enable;
         async_reset_signal_is(reset,true);
         dont_initialize(); 
