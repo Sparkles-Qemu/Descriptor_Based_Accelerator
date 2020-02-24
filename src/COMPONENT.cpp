@@ -41,8 +41,6 @@ struct StatefulComponent : public sc_module
     sc_in<bool> enable;
 
     //------------Code Starts Here-------------------------
-
-
     /**
      * @brief Waits for n-cycles before checking if not paused. If paused and
      * unpaused briefly while waiting for n-cycles effect is the same. fn_main

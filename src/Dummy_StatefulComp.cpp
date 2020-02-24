@@ -35,7 +35,7 @@ struct DummyStatefulComponent : StatefulComponent
         cout << "@ " << sc_time_stamp() << " Dummy Writing " << count_val.read()+1 << endl;
         count_val.write(count_val.read()+1);
 
-        wait_on_clk_or_pause_if_disable();
+        wait_on_clk_or_pause_if_disable(1);
 
         cout << "@ " << sc_time_stamp() << " Dummy Writing " << count_val.read()+1 << endl;
         count_val.write(count_val.read()+1);
