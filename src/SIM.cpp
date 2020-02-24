@@ -1,5 +1,5 @@
 #include "systemc.h"
-#include "PE.cpp"
+#include "Dummy_StatefulComp.cpp"
 #include "assert.h"
 
 using std::cout;
@@ -28,14 +28,9 @@ int sc_main(int argc, char *argv[])
     sc_signal<bool > clk("clk"); 
     sc_signal<bool > reset("reset"); 
     sc_signal<bool > enable("enable"); 
-    sc_signal<sc_int<PE::PE_ACCUMULATION_PRECISION> > psumIn("psumIn");
-    sc_signal<sc_int<PE::PE_OPERAND_PRECISION> > pixelIn0("pixelIn0");
-    sc_signal<sc_int<PE::PE_ACCUMULATION_PRECISION> > psumOut("psumOut");
+    sc_signal<sc_int<32> > counter("counter"); 
 
-    PE pe1("pe1", clk, reset, enable, psumIn, pixelIn0, psumOut);
-
-    pe1.current_weight = PE_CURRENT_WEIGHT;
-
+    DummyStatefulComponent dummy("dummy", clk, reset, enable, counter);
     /**
      * @brief Here's how you log specific signals you would want to watch in
      * gtkwave. Just call sc_trace on whatever signal you want and give it a
@@ -46,9 +41,9 @@ int sc_main(int argc, char *argv[])
     sc_trace_file *wf = sc_create_vcd_trace_file("./src/traces/sim_signals.trace");
     sc_trace(wf, clk, "clk");
     sc_trace(wf, reset, "reset");
-    sc_trace(wf, psumIn, "psumIn");
-    sc_trace(wf, pixelIn0, "pixelIn0");    
-    sc_trace(wf, psumOut, "psumOut");
+    sc_trace(wf, enable, "enable");
+    sc_trace(wf, counter, "counter");
+
     reset = 0;
     /**
      * @brief Steps the simulation one ns forward. The SC_NS value is an enum
@@ -56,6 +51,7 @@ int sc_main(int argc, char *argv[])
      * 
      */
     sc_start(1, SC_NS);
+
     reset = 1;
     cout << "@ " << sc_time_stamp() << " Asserting reset" << endl;
     for (int i = 0; i < MAX_RESET_CYCLES; i++)
@@ -66,30 +62,34 @@ int sc_main(int argc, char *argv[])
     reset = 0; 
     
     cout << "@ " << sc_time_stamp() << " Start Compute" << endl;
+    enable = 1;
+
     for (int i = 0; i < MAX_SIM_CYCLES; i++)
     {
-        psumIn = (i+1);
-        pixelIn0 = (i+1);
+        if(i > (MAX_SIM_CYCLES / 2) - 1)
+        {
+            enable = 0;
+        }
         clk = 0;
+        sc_start(1, SC_NS);
+
+        clk = 1;
+        sc_start(1, SC_NS);
+    }
+
+    enable = 1;
+
+    for (int i = 0; i < MAX_SIM_CYCLES; i++)
+    {
+        if(i > (MAX_SIM_CYCLES / 2) - 1)
+        {
+            reset = 1;
+        }        clk = 0;
         sc_start(1, SC_NS);
         clk = 1;
         sc_start(1, SC_NS);
-        cout << "@ " << sc_time_stamp() << " psum_out: " << psumOut.read()  << endl;
     }
 
-    cout << "@ " << sc_time_stamp() << " Done with compute, testing async reset" << endl;
-    
-    /**
-     * @brief Random reset not tied to a particular clk cycle. Note change in precision
-     * when outputing sim time in module.
-     * 
-     */
-    cout << "@ " << sc_time_stamp() << " Compute complete, testing async reset" << endl;
-    sc_start(1.5, SC_NS); 
-    reset = 1;
-    sc_start(1.5, SC_NS);
-    
-    cout << "@ " << sc_time_stamp() << " Sim complete, Simulation terminating .... " << endl;
 
 
     return 0; // Terminate simulation

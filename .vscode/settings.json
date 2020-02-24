@@ -39,5 +39,8 @@
         "utility": "cpp",
         "typeinfo": "cpp",
         "random": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "unpause"
+    ]
 }

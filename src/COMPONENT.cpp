@@ -41,30 +41,64 @@ struct StatefulComponent : public sc_module
     sc_in<bool> enable;
 
     //------------Code Starts Here-------------------------
+
+    void wait_on_clk_or_pause_if_disable()
+    {
+        wait();
+        if(enable.read() == false)
+        {
+            while(true)
+            {
+                wait();
+                if(enable.read() == true && clk.read() == true)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    void main_thread()
+    {
+        while(true)
+        {
+            if(reset.read() == true)
+            {
+                fn_reset();
+            }
+            else if(enable.read() == true && clk.read() == true)
+            {
+                fn_main();
+            }
+            wait();
+        }
+    }
+
+    virtual void fn_reset()
+    {
+
+    }
+
     virtual void fn_main()
     {
         
     }
-
-    virtual void reset_main()
-    {
-
-    }
+    
+    SC_HAS_PROCESS(StatefulComponent);
 
     StatefulComponent(sc_module_name name,  const sc_signal<bool>& _clk, const sc_signal<bool>& _reset, const sc_signal<bool>& _enable) : sc_module(name)
     {
-        SC_THREAD(fn_main);
+        SC_THREAD(main_thread);
         sensitive << clk.pos();
-
-        SC_THREAD(reset_main)
-        sensitive << reset;
-
+        // sensitive << reset;
+        sensitive << enable;
+        async_reset_signal_is(reset,true);
+        dont_initialize(); 
         this->clk(_clk);
         this->reset(_reset);
         this->enable(_enable);
     }
 
-    SC_HAS_PROCESS(StatefulComponent);
 
 };
 
