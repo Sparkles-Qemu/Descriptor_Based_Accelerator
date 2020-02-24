@@ -47,7 +47,7 @@ struct DummyStatefulComponent : StatefulComponent
         const sc_signal<bool>& _reset, 
         const sc_signal<bool>& _enable,
         sc_signal<sc_int<32> >& _counter
-    ) : StatefulComponent(name, _clk, _reset, _enable)
+    ) : StatefulComponent(name, _clk, _reset, _enable, 1)
     {
         this->count_val(_counter);
         cout << "Dummy StatefulComponent Instantiated " << endl;

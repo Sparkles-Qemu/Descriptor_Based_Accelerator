@@ -39,6 +39,8 @@ struct StatefulComponent : public sc_module
     sc_in<bool> clk;   // Clock input of the design
     sc_in<bool> reset; // active high, synchronous Reset input
     sc_in<bool> enable;
+    //------------Local Variables-------------------------
+    unsigned int mainPeriod;
 
     //------------Code Starts Here-------------------------
     /**
@@ -78,7 +80,7 @@ struct StatefulComponent : public sc_module
             {
                 fn_main();
             }
-            wait();
+            wait(mainPeriod);
         }
     }
 
@@ -94,7 +96,7 @@ struct StatefulComponent : public sc_module
     
     SC_HAS_PROCESS(StatefulComponent);
 
-    StatefulComponent(sc_module_name name,  const sc_signal<bool>& _clk, const sc_signal<bool>& _reset, const sc_signal<bool>& _enable) : sc_module(name)
+    StatefulComponent(sc_module_name name,  const sc_signal<bool>& _clk, const sc_signal<bool>& _reset, const sc_signal<bool>& _enable, unsigned int _mainPeriod) : sc_module(name)
     {
         SC_THREAD(main_thread);
         sensitive << clk.pos();
@@ -104,6 +106,7 @@ struct StatefulComponent : public sc_module
         this->clk(_clk);
         this->reset(_reset);
         this->enable(_enable);
+        mainPeriod = _mainPeriod;
     }
 
 
