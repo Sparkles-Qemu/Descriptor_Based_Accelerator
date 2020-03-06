@@ -10,12 +10,13 @@
 
 using std::vector;
 
+template <typename DataType>
 struct SRAM
 {
-    static const int SRAM_PRECISION = GLOBALS::SRAM_PRECISION;
+    static const int SRAM_ADDR_PRECISION = GLOBALS::SRAM_ADDR_PRECISION;
     static const int SRAM_DEFAULT_SIZE = GLOBALS::SRAM_DEFAULT_SIZE;
 
-    vector<sc_int<SRAM_PRECISION> > memory;
+    vector<DataType> memory;
 
     SRAM()
     {
@@ -26,13 +27,13 @@ struct SRAM
     {
         memory.resize(_size);
     }
-
-    sc_int<SRAM_PRECISION> get(sc_int<SRAM_PRECISION> addr)
+    
+    DataType get(sc_int<SRAM_ADDR_PRECISION> addr)
     {
         return memory.at(addr);
     }
-
-    sc_int<SRAM_PRECISION> set(sc_int<SRAM_PRECISION> addr, sc_int<SRAM_PRECISION> data)
+    
+    DataType set(sc_int<SRAM_ADDR_PRECISION> addr, DataType data)
     {
         memory.at(addr) = data;
         return memory.at(addr);
