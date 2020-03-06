@@ -14,14 +14,31 @@ struct StatelessComponent : public sc_module
     sc_in<bool> enable;
 
     //------------Code Starts Here-------------------------
-    virtual void fn_main()
+    virtual void computeFn()
+    {
+        
+    }
+    
+    virtual void resetFn()
     {
         
     }
 
+    void main_thread()
+    {
+        if (reset.read() == 1) 
+        { 
+            resetFn();
+        } 
+        else if(clk.read() == 1 && enable.read() == 1)
+        {
+            computeFn();
+        }
+    }
+
     StatelessComponent(sc_module_name name,  const sc_signal<bool>& _clk, const sc_signal<bool>& _reset, const sc_signal<bool>& _enable) : sc_module(name)
     {
-        SC_METHOD(fn_main);
+        SC_METHOD(main_thread);
         sensitive << reset;
         sensitive << clk.pos();
         this->clk(_clk);

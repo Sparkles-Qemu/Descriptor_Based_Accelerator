@@ -1,13 +1,13 @@
 
-#ifndef PE_CPP
-#define PE_CPP
+#ifndef PAR_DESCRIPTOR_CPP
+#define PAR_DESCRIPTOR_CPP
 
 #include "systemc.h"
 #include "map"
 #include "vector"
 #include "COMPONENT.cpp"
 
-struct PE : StatelessComponent
+struct PAR_DESCRIPTOR : StatelessComponent
 {
     //------------Define Globals Here---------------------
     static const unsigned int PE_OPERAND_PRECISION = 32;
@@ -22,22 +22,18 @@ struct PE : StatelessComponent
     sc_uint<PE_OPERAND_PRECISION>  current_weight;
 
     //------------Define Functions Here---------------------
-    void fn_main()
+    void computeFn()
     {
-      if (reset.read() == 1) 
-      { 
-        cout << "@ " << sc_time_stamp() << " Module has been reset" << endl;
-        psumOut.write(0);
-      } 
-      else 
-      {
-        if(clk.read() == 1 && enable.read() == 1)
-        {
-          psumOut.write(psumIn.read()+pixelIn0.read()*current_weight);
-        }
-      }
+      psumOut.write(psumIn.read()+pixelIn0.read()*current_weight);
     }
-    PE(
+
+    void resetFn()
+    {
+      cout << "@ " << sc_time_stamp() << " PE has been reset" << endl;
+      psumOut.write(0);
+    }
+
+    PAR_DESCRIPTOR(
         ::sc_core::sc_module_name name, 
         const sc_signal<bool>& _clk, 
         const sc_signal<bool>& _reset, 

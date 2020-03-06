@@ -6,12 +6,13 @@
 #include "map"
 #include "vector"
 #include "COMPONENT.cpp"
+#include "GLOBALS.cpp"
 
 struct PE : StatelessComponent
 {
     //------------Define Globals Here---------------------
-    static const unsigned int PE_OPERAND_PRECISION = 32;
-    static const unsigned int PE_ACCUMULATION_PRECISION = 32;
+    static const unsigned int PE_OPERAND_PRECISION = GLOBALS::PE_OPERAND_PRECISION;
+    static const unsigned int PE_ACCUMULATION_PRECISION = GLOBALS::PE_ACCUMULATION_PRECISION;
 
     //------------Define Ports Here---------------------
     sc_in<sc_int<PE_ACCUMULATION_PRECISION> > psumIn;
@@ -22,21 +23,17 @@ struct PE : StatelessComponent
     sc_uint<PE_OPERAND_PRECISION>  current_weight;
 
     //------------Define Functions Here---------------------
-    void fn_main()
+    void computeFn()
     {
-      if (reset.read() == 1) 
-      { 
-        cout << "@ " << sc_time_stamp() << " Module has been reset" << endl;
-        psumOut.write(0);
-      } 
-      else 
-      {
-        if(clk.read() == 1 && enable.read() == 1)
-        {
-          psumOut.write(psumIn.read()+pixelIn0.read()*current_weight);
-        }
-      }
+      psumOut.write(psumIn.read()+pixelIn0.read()*current_weight);
     }
+
+    void resetFn()
+    {
+      cout << "@ " << sc_time_stamp() << " PE has been reset" << endl;
+      psumOut.write(0);
+    }
+
     PE(
         ::sc_core::sc_module_name name, 
         const sc_signal<bool>& _clk, 

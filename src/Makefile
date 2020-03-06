@@ -1,5 +1,5 @@
 WORKING_DIR:=$(shell pwd)
-TARGET=SIM.cpp
+TARGET=tb_PE.cpp
 
 all: debug
 

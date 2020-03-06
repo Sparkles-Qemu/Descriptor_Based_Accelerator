@@ -1,20 +1,17 @@
 $date
-     Feb 24, 2020       01:05:59
+     Mar 05, 2020       23:25:48
 $end
 
 $version
               SystemC 2.3.0_pub_rev_20111121-OSCI --- Nov 24 2019 16:06:02
 $end
 
-$timescale
-     1 ps
-$end
-
 $scope module SystemC $end
 $var wire    1  aaa  clk       $end
 $var wire    1  aab  reset       $end
-$var wire    1  aac  enable       $end
-$var wire   32  aad  counter [31:0]  $end
+$var wire   32  aac  psumIn [31:0]  $end
+$var wire   32  aad  pixelIn0 [31:0]  $end
+$var wire   32  aae  psumOut [31:0]  $end
 $upscope $end
 $enddefinitions  $end
 
@@ -25,145 +22,105 @@ $end
 $dumpvars
 0aaa
 0aab
-0aac
+b0 aac
 b0 aad
+b0 aae
 $end
 
-#1000
+#2
 1aab
 
-#11000
+#22
 0aab
-1aac
-
-#12000
-1aaa
+b1 aac
 b1 aad
 
-#13000
-0aaa
-
-#14000
+#26
 1aaa
+b11 aae
+
+#28
+0aaa
+b10 aac
 b10 aad
 
-#15000
-0aaa
-
-#16000
+#30
 1aaa
+b110 aae
+
+#32
+0aaa
+b11 aac
 b11 aad
 
-#17000
-0aaa
-
-#18000
+#34
 1aaa
+b1001 aae
+
+#36
+0aaa
+b100 aac
 b100 aad
 
-#19000
-0aaa
-
-#20000
+#38
 1aaa
+b1100 aae
+
+#40
+0aaa
+b101 aac
 b101 aad
 
-#21000
-0aaa
-0aac
-
-#22000
+#42
 1aaa
+b1111 aae
 
-#23000
+#44
 0aaa
-
-#24000
-1aaa
-
-#25000
-0aaa
-
-#26000
-1aaa
-
-#27000
-0aaa
-
-#28000
-1aaa
-
-#29000
-0aaa
-
-#30000
-1aaa
-
-#31000
-0aaa
-1aac
-
-#32000
-1aaa
+b110 aac
 b110 aad
 
-#33000
-0aaa
-
-#34000
+#46
 1aaa
+b10010 aae
+
+#48
+0aaa
+b111 aac
 b111 aad
 
-#35000
-0aaa
-
-#36000
+#50
 1aaa
+b10101 aae
+
+#52
+0aaa
+b1000 aac
 b1000 aad
 
-#37000
-0aaa
-
-#38000
+#54
 1aaa
+b11000 aae
+
+#56
+0aaa
+b1001 aac
 b1001 aad
 
-#39000
-0aaa
-
-#40000
+#58
 1aaa
+b11011 aae
+
+#60
+0aaa
+b1010 aac
 b1010 aad
 
-#41000
-0aaa
+#62
+1aaa
+b11110 aae
+
+#67
 1aab
-b0 aad
-
-#42000
-1aaa
-
-#43000
-0aaa
-
-#44000
-1aaa
-
-#45000
-0aaa
-
-#46000
-1aaa
-
-#47000
-0aaa
-
-#48000
-1aaa
-
-#49000
-0aaa
-
-#50000
-1aaa
+b0 aae
 
