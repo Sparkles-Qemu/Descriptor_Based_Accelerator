@@ -1,6 +1,6 @@
 
-#ifndef PAR_DESCRIPTOR_CPP
-#define PAR_DESCRIPTOR_CPP
+#ifndef PAR_DESCRIPTOR_DMA_CPP
+#define PAR_DESCRIPTOR_DMA_CPP
 
 #include <assert.h>
 #include "systemc.h"
@@ -12,28 +12,39 @@
 #include "DESCRIPTOR_INSTRUCTION.cpp"
 
 using std::vector;
+using std::cout;
+using std::endl;
 
-struct PAR_DESCRIPTOR : StatelessComponent
+template <int SramAddrPrecision, typename DataType>
+struct PAR_DESCRIPTOR_DMA : StatelessComponent
 {
     //------------Define Globals Here---------------------
-    static const unsigned int PAR_DESCRIPTOR_ADDR_PRECISION = GLOBALS::SRAM_ADDR_PRECISION;
-    static const unsigned int PAR_DESCRIPTOR_DATA_PRECISION = GLOBALS::SRAM_DATA_PRECISION;
-    static const unsigned int SRAM_RESPONSE_DELAY = GLOBALS::SRAM_RESPONSE_DELAY;
-    static const unsigned int DESCRIPTOR_INSTRUCTION_BUFFER_SIZE = GLOBALS::DESCRIPTOR_INSTRUCTION_BUFFER_SIZE;
+    unsigned int DESCRIPTOR_INSTRUCTION_BUFFER_SIZE = GLOBALS::DESCRIPTOR_INSTRUCTION_BUFFER_SIZE;
 
     //------------Local Variables Here---------------------
-    enum FetchState {IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
-    enum ExecuteState {IDLE, ISSUE_2D_OP, ISSUE_1D_OP, GET_NEXT_INST, WAIT} executeState;
+    enum class FetchState {IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
+    enum class ExecuteState {IDLE, ISSUE_2D_OP, ISSUE_1D_OP, GET_NEXT_INST, WAIT} executeState;
     unsigned int fetchWaitCounter;
     unsigned int executeWaitCounter;
     unsigned int fetchIndex;
     unsigned int executeIndex;
-    sc_int<PAR_DESCRIPTOR_ADDR_PRECISION> addr;
+    unsigned int sramResponseDelay = GLOBALS::SRAM_RESPONSE_DELAY;
     vector<DescriptorInstruction> instructionBuffer;
-    SRAM<DescriptorInstruction> *instructionSram;
-    SRAM<sc_int<PAR_DESCRIPTOR_DATA_PRECISION> > *dataSram;
+    InstructionSRAM *instructionSram;
+    SRAM<SramAddrPrecision, DataType > *dataSram;
 
     //------------Define Functions Here---------------------
+    void printInstructionBuffer()
+    {
+      int index = 0;
+      for(auto descriptor : instructionBuffer)
+      {
+        cout << "Descriptor[" << index << "]" << ": Contents" << endl;
+        descriptor.printDescriptor();
+        index++;
+      }
+    }
+    
     virtual void memoryOp()
     {
 
@@ -41,7 +52,7 @@ struct PAR_DESCRIPTOR : StatelessComponent
 
     void fetch()
     {
-      static sc_int<PAR_DESCRIPTOR_ADDR_PRECISION> nextDescriptorAddr;
+      static sc_int<SramAddrPrecision> nextDescriptorAddr;
 
       switch(fetchState)
       {
@@ -63,7 +74,7 @@ struct PAR_DESCRIPTOR : StatelessComponent
           {
             DescriptorInstruction currentIns = instructionBuffer.at(fetchIndex);
             nextDescriptorAddr = currentIns.nextDescPtr;
-            fetchWaitCounter = SRAM_RESPONSE_DELAY;
+            fetchWaitCounter = sramResponseDelay;
             fetchState = FetchState::WAIT;
             fetchIndex = (fetchIndex+1) % DESCRIPTOR_INSTRUCTION_BUFFER_SIZE;
           }
@@ -146,21 +157,26 @@ struct PAR_DESCRIPTOR : StatelessComponent
       executeState = ExecuteState::IDLE;
       fetchIndex = 0;
       executeIndex = 0;
+      instructionBuffer.clear();
     }
 
-    PAR_DESCRIPTOR(
+    PAR_DESCRIPTOR_DMA(
         ::sc_core::sc_module_name name, 
         const sc_signal<bool>& _clk, 
         const sc_signal<bool>& _reset, 
         const sc_signal<bool>& _enable,
-        SRAM<DescriptorInstruction> *_instructionSram,
-        SRAM<sc_int<PAR_DESCRIPTOR_DATA_PRECISION> > *_dataSram
+        InstructionSRAM *_instructionSram,
+        SRAM<SramAddrPrecision, DataType > *_dataSram
       ) : StatelessComponent(name, _clk, _reset, _enable)
     {
-    instructionSram = instructionSram;
-    dataSram = _dataSram;
-    instructionBuffer.resize(DESCRIPTOR_INSTRUCTION_BUFFER_SIZE);
+      instructionSram = instructionSram;
+      dataSram = _dataSram;
+      instructionBuffer.resize(DESCRIPTOR_INSTRUCTION_BUFFER_SIZE);
     }
 
-}; // End of Module PE
+}; 
+
+typedef PAR_DESCRIPTOR_DMA<GLOBALS::SRAM_ADDR_PRECISION, sc_int<GLOBALS::SRAM_DATA_PRECISION> > DefaultParallelDMA;
+
+// End of Module Parallel DMA
 #endif

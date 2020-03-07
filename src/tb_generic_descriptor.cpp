@@ -1,5 +1,8 @@
 #include "systemc.h"
-#include "PE.cpp"
+#include "SRAM.cpp"
+#include "PAR_DESCRIPTOR_DMA.cpp"
+#include "GLOBALS.cpp"
+#include "DESCRIPTOR_INSTRUCTION.cpp"
 
 using std::cout;
 using std::endl;
@@ -18,8 +21,19 @@ int sc_main(int argc, char *argv[])
     sc_signal<bool > enable("enable"); 
 
     /**
-     * Component Decleration
+     * Default SRAM declarations. Use defaults defined in Globals
+     * 
      */
+    InstructionSRAM instSRAM;
+    DefaultDataSRAM dataSRAM;
+
+    /**
+     * Component Decleration
+     * Default Parallel Descriptor DMA,
+     * Relies of defaults defined in GLOBALS. If parallel DMA attached to SRAM 
+     * of different address precision or data type, compiler will fail. 
+     */
+    DefaultParallelDMA parallelDma("Par_Descriptor",clk, reset, enable, &instSRAM, &dataSRAM);
 
     /**
      * Loading Descriptors into SRAM at Index 0
@@ -55,13 +69,7 @@ int sc_main(int argc, char *argv[])
      */
     cout << "@ " << sc_time_stamp() << " Start Compute" << endl;
     for (int i = 0; i < MAX_SIM_CYCLES; i++)
-    {
-        /**
-        * Set Data
-        */
-        clk = 0;
-        sc_start(1, SC_NS);
-        
+    {        
         /**
         * Pulse Clock
         */
@@ -71,8 +79,7 @@ int sc_main(int argc, char *argv[])
         /**
         * Validate Output
         */
-        cout << "@ " << sc_time_stamp() << " psum_out: " << psumOut.read()  << endl;
-        assert(psumOut.read() == (i+1) + (i+1)*PE_CURRENT_WEIGHT);
+
     }
 
     /**

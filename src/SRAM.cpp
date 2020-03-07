@@ -1,31 +1,43 @@
 
-#ifndef SRAM_CPP
-#define SRAM_CPP
+#ifndef _SRAM_CPP
+#define _SRAM_CPP
 
 #include "systemc.h"
 #include "map"
 #include "vector"
 #include "COMPONENT.cpp"
 #include "GLOBALS.cpp"
+#include "assert.h"
+#include "DESCRIPTOR_INSTRUCTION.cpp"
 
 using std::vector;
 
-template <typename DataType>
+template <int SRAM_ADDR_PRECISION, typename DataType>
 struct SRAM
 {
-    static const int SRAM_ADDR_PRECISION = GLOBALS::SRAM_ADDR_PRECISION;
-    static const int SRAM_DEFAULT_SIZE = GLOBALS::SRAM_DEFAULT_SIZE;
+    int sramSize = GLOBALS::SRAM_DEFAULT_SIZE;
 
     vector<DataType> memory;
 
     SRAM()
     {
-        memory.resize(SRAM_DEFAULT_SIZE);
+        memory.resize(sramSize);
     }
 
     SRAM(unsigned int _size)
     {
         memory.resize(_size);
+    }
+
+    void load(vector<DataType> data, unsigned int offset)
+    {
+        assert(offset < memory.size() && (offset+data.size()) < memory.size());
+        int index = offset;
+        for(auto val : data)
+        {
+            memory.set(index, val);
+            index++;
+        }
     }
     
     DataType get(sc_int<SRAM_ADDR_PRECISION> addr)
@@ -40,4 +52,8 @@ struct SRAM
     }
 
 }; // End of Module SRAM
+
+typedef SRAM<GLOBALS::SRAM_ADDR_PRECISION, DescriptorInstruction > InstructionSRAM; 
+typedef SRAM<GLOBALS::SRAM_ADDR_PRECISION, sc_int<GLOBALS::SRAM_DATA_PRECISION > > DefaultDataSRAM; 
+
 #endif

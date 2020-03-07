@@ -26,14 +26,14 @@ int sc_main(int argc, char *argv[])
     sc_signal<bool > clk("clk"); 
     sc_signal<bool > reset("reset"); 
     sc_signal<bool > enable("enable"); 
-    sc_signal<sc_int<PE::PE_ACCUMULATION_PRECISION> > psumIn("psumIn");
-    sc_signal<sc_int<PE::PE_OPERAND_PRECISION> > pixelIn0("pixelIn0");
-    sc_signal<sc_int<PE::PE_ACCUMULATION_PRECISION> > psumOut("psumOut");
+    sc_signal<sc_int<GLOBALS::PE_ACCUMULATION_PRECISION> > psumIn("psumIn");
+    sc_signal<sc_int<GLOBALS::PE_OPERAND_PRECISION> > pixelIn0("pixelIn0");
+    sc_signal<sc_int<GLOBALS::PE_ACCUMULATION_PRECISION> > psumOut("psumOut");
 
     /**
      * Component Decleration
      */
-    PE pe1("pe1", clk, reset, enable, psumIn, pixelIn0, psumOut);
+    PE<GLOBALS::PE_OPERAND_PRECISION, GLOBALS::PE_ACCUMULATION_PRECISION> pe1("pe1", clk, reset, enable, psumIn, pixelIn0, psumOut);
 
     /**
      * Loading a weight into a PE

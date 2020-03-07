@@ -5,8 +5,8 @@
 #include "systemc.h"
 #include <iostream>
 
-using cout;
-using endl;
+using std::cout;
+using std::endl;
 
 struct DescriptorInstruction
 {
@@ -16,7 +16,6 @@ struct DescriptorInstruction
     sc_int<GLOBALS::SRAM_DATA_PRECISION> xCount;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> xModify;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> yCount;
-    sc_int<GLOBALS::SRAM_DATA_PRECISION> yModify;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> yModify;
 
     DescriptorInstruction() = default;

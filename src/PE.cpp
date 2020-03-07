@@ -8,11 +8,10 @@
 #include "COMPONENT.cpp"
 #include "GLOBALS.cpp"
 
+template <int PE_OPERAND_PRECISION, int PE_ACCUMULATION_PRECISION>
 struct PE : StatelessComponent
 {
     //------------Define Globals Here---------------------
-    static const unsigned int PE_OPERAND_PRECISION = GLOBALS::PE_OPERAND_PRECISION;
-    static const unsigned int PE_ACCUMULATION_PRECISION = GLOBALS::PE_ACCUMULATION_PRECISION;
 
     //------------Define Ports Here---------------------
     sc_in<sc_int<PE_ACCUMULATION_PRECISION> > psumIn;
