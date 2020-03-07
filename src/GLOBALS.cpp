@@ -1,6 +1,8 @@
 #ifndef GLOBALS_CPP
 #define GLOBALS_CPP
 
+#define DEBUGGER_HOOKUP
+
 namespace GLOBALS
 {
     const int SRAM_ADDR_PRECISION = 32;

@@ -3,6 +3,10 @@
 
 #include "GLOBALS.cpp"
 #include "systemc.h"
+#include <iostream>
+
+using cout;
+using endl;
 
 struct DescriptorInstruction
 {
@@ -15,6 +19,7 @@ struct DescriptorInstruction
     sc_int<GLOBALS::SRAM_DATA_PRECISION> yModify;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> yModify;
 
+    DescriptorInstruction() = default;
     DescriptorInstruction(const DescriptorInstruction &) = default;
 
     DescriptorInstruction(
@@ -34,6 +39,17 @@ struct DescriptorInstruction
         this->xModify = _xModify;
         this->yCount = _yCount;
         this->yModify = _yModify;
+    }
+
+    void printDescriptor()
+    {
+        cout << "nextDescPtr: " << nextDescPtr << endl;
+        cout << "startAddr: " << startAddr << endl;
+        cout << "dmaConfig: " << dmaConfig << endl;
+        cout << "xCount: " << xCount << endl;
+        cout << "xModify: " << xModify << endl;
+        cout << "yCount: " << yCount << endl;
+        cout << "yModify: " << yModify << endl; 
     }
 };
 

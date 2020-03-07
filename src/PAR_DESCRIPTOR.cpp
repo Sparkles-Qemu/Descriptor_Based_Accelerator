@@ -70,7 +70,9 @@ struct PAR_DESCRIPTOR : StatelessComponent
           catch(const std::exception& e)
           {
             std::cerr << e.what() << '\n';
+            #ifdef DEBUGGER_HOOKUP
             assert(0);
+            #endif
           }
           break;
         }
@@ -106,7 +108,9 @@ struct PAR_DESCRIPTOR : StatelessComponent
           catch(const std::exception& e)
           {
             std::cerr << e.what() << '\n';
+            #ifdef DEBUGGER_HOOKUP
             assert(0);
+            #endif
           }
           break;
         }
