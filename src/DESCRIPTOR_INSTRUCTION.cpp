@@ -42,13 +42,52 @@ struct DescriptorInstruction
 
     void printDescriptor()
     {
-        cout << "nextDescPtr: " << nextDescPtr << endl;
-        cout << "startAddr: " << startAddr << endl;
-        cout << "dmaConfig: " << dmaConfig << endl;
-        cout << "xCount: " << xCount << endl;
-        cout << "xModify: " << xModify << endl;
-        cout << "yCount: " << yCount << endl;
-        cout << "yModify: " << yModify << endl; 
+        cout << "\tnextDescPtr: " << nextDescPtr << endl;
+        cout << "\tstartAddr: " << startAddr << endl;
+        cout << "\tdmaConfig: " << dmaConfig << endl;
+        cout << "\txCount: " << xCount << endl;
+        cout << "\txModify: " << xModify << endl;
+        cout << "\tyCount: " << yCount << endl;
+        cout << "\tyModify: " << yModify << endl; 
+    }
+
+    bool operator==(const DescriptorInstruction& rhs)
+    {
+        bool result = true;
+        result &= (this->nextDescPtr == rhs.nextDescPtr);
+        result &= (this->startAddr == rhs.startAddr);
+        result &= (this->dmaConfig == rhs.dmaConfig);
+        result &= (this->xCount == rhs.xCount);
+        result &= (this->xModify == rhs.xModify);
+        result &= (this->yCount == rhs.yCount);
+        result &= (this->yModify == rhs.yModify);
+        return result;
+    }
+
+    DescriptorInstruction& operator=(const DescriptorInstruction& rhs)
+    {
+        if(this != &rhs)
+        {
+            this->nextDescPtr = rhs.nextDescPtr;
+            this->startAddr = rhs.startAddr;
+            this->dmaConfig = rhs.dmaConfig;
+            this->xCount = rhs.xCount;
+            this->xModify = rhs.xModify;
+            this->yCount = rhs.yCount;
+            this->yModify = rhs.yModify;
+        }
+        return *this;
+    }
+
+    void clear()
+    {
+        nextDescPtr = 0;
+        startAddr = 0;
+        dmaConfig = 0;
+        xCount = 0;
+        xModify = 0;
+        yCount = 0;
+        yModify = 0;
     }
 };
 

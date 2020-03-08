@@ -10,6 +10,7 @@
 #include "GLOBALS.cpp"
 #include "SRAM.cpp"
 #include "DESCRIPTOR_INSTRUCTION.cpp"
+#include <cmath>
 
 using std::vector;
 using std::cout;
@@ -18,20 +19,20 @@ using std::endl;
 template <int SramAddrPrecision, typename DataType>
 struct PAR_DESCRIPTOR_DMA : StatelessComponent
 {
-    //------------Define Globals Here---------------------
-    unsigned int DESCRIPTOR_INSTRUCTION_BUFFER_SIZE = GLOBALS::DESCRIPTOR_INSTRUCTION_BUFFER_SIZE;
-
     //------------Local Variables Here---------------------
-    enum class FetchState {IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
+    enum class FetchState {INIT, IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
     enum class ExecuteState {IDLE, ISSUE_2D_OP, ISSUE_1D_OP, GET_NEXT_INST, WAIT} executeState;
     unsigned int fetchWaitCounter;
     unsigned int executeWaitCounter;
     unsigned int fetchIndex;
+    unsigned int prevFetchIndex;
     unsigned int executeIndex;
     unsigned int sramResponseDelay = GLOBALS::SRAM_RESPONSE_DELAY;
+    unsigned int instructionStartOffset;
     vector<DescriptorInstruction> instructionBuffer;
     InstructionSRAM *instructionSram;
     SRAM<SramAddrPrecision, DataType > *dataSram;
+    sc_int<SramAddrPrecision> nextDescriptorAddr;
 
     //------------Define Functions Here---------------------
     void printInstructionBuffer()
@@ -44,6 +45,16 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         index++;
       }
     }
+
+    void printSpecial()
+    {
+      int index = 0;
+      for(auto descriptor : instructionBuffer)
+      {
+        cout << "Descriptor[" << index << "]" << ": SRAM_ADDR(" << descriptor.startAddr << ") : nextDescriptor(" << descriptor.nextDescPtr << ")" << endl;
+        index++;
+      }
+    }
     
     virtual void memoryOp()
     {
@@ -52,13 +63,37 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
 
     void fetch()
     {
-      static sc_int<SramAddrPrecision> nextDescriptorAddr;
+
 
       switch(fetchState)
       {
+        /**
+         * Magic load of internal buffer for the first time
+         * 
+         */
+        case FetchState::INIT:
+        {
+          try
+          {
+            unsigned int offset = instructionStartOffset;
+            for (auto it = instructionBuffer.begin(); it != instructionBuffer.end(); ++it)
+            {
+              *it = instructionSram->get(offset);
+              offset = it->nextDescPtr;
+            }
+          }
+          catch(const std::exception& e)
+          {
+            std::cerr << e.what() << '\n';
+            assert(0);
+            exit(EXIT_FAILURE);
+          }
+          fetchState = FetchState::IDLE;
+          break;
+        }
         case FetchState::IDLE:
         {
-          if((fetchIndex+1) % DESCRIPTOR_INSTRUCTION_BUFFER_SIZE != executeIndex)
+          if(abs(executeIndex-fetchIndex) > 0)
           {
             fetchState = FetchState::LOAD_INST_FROM_SRAM;
           }
@@ -72,11 +107,10 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         {
           try
           {
-            DescriptorInstruction currentIns = instructionBuffer.at(fetchIndex);
+            DescriptorInstruction currentIns = instructionBuffer.at(prevFetchIndex);
             nextDescriptorAddr = currentIns.nextDescPtr;
             fetchWaitCounter = sramResponseDelay;
             fetchState = FetchState::WAIT;
-            fetchIndex = (fetchIndex+1) % DESCRIPTOR_INSTRUCTION_BUFFER_SIZE;
           }
           catch(const std::exception& e)
           {
@@ -98,7 +132,6 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
           {
             fetchState = FetchState::WAIT;
           }
-          
           break;
         }
         case FetchState::STORE_INST_TO_BUFFER:
@@ -107,7 +140,9 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
           {
             DescriptorInstruction nextIns = instructionSram->get(nextDescriptorAddr);
             instructionBuffer.at(fetchIndex) = nextIns;
-            if((fetchIndex+1) % DESCRIPTOR_INSTRUCTION_BUFFER_SIZE != executeIndex)
+            prevFetchIndex = fetchIndex;
+            fetchIndex = (fetchIndex+1) % instructionBuffer.size();            
+            if(abs(executeIndex-fetchIndex) > 0)
             {
               fetchState = FetchState::LOAD_INST_FROM_SRAM;
             }
@@ -153,11 +188,35 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
 
     void resetFn()
     {
-      fetchState = FetchState::IDLE;
+      fetchState = FetchState::INIT;
       executeState = ExecuteState::IDLE;
       fetchIndex = 0;
+      prevFetchIndex = (instructionBuffer.size()-1);
       executeIndex = 0;
-      instructionBuffer.clear();
+      clearInstructionBuffer();
+    }
+
+    void setIndexOfFirstInstruction()
+    {
+      try
+      {
+        //check valid offset
+        assert(instructionSram->sramSize > instructionStartOffset);
+        //set first index where first instruction exists
+        instructionBuffer.begin()->nextDescPtr = instructionStartOffset;
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << '\n';
+      }
+    }
+
+    void clearInstructionBuffer()
+    {
+      for(auto descriptor : instructionBuffer)
+      {
+        descriptor.clear();
+      }
     }
 
     PAR_DESCRIPTOR_DMA(
@@ -166,12 +225,36 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         const sc_signal<bool>& _reset, 
         const sc_signal<bool>& _enable,
         InstructionSRAM *_instructionSram,
-        SRAM<SramAddrPrecision, DataType > *_dataSram
+        SRAM<SramAddrPrecision, DataType > *_dataSram,
+        const unsigned int _instructionStartOffset
+      ) : PAR_DESCRIPTOR_DMA(
+        name, 
+        _clk, 
+        _reset, 
+        _enable, 
+        _instructionSram, 
+        _dataSram, 
+        _instructionStartOffset, 
+        GLOBALS::DESCRIPTOR_INSTRUCTION_BUFFER_SIZE)
+    {
+    }
+
+    PAR_DESCRIPTOR_DMA(
+        ::sc_core::sc_module_name name, 
+        const sc_signal<bool>& _clk, 
+        const sc_signal<bool>& _reset, 
+        const sc_signal<bool>& _enable,
+        InstructionSRAM *_instructionSram,
+        SRAM<SramAddrPrecision, DataType > *_dataSram,
+        const unsigned int _instructionStartOffset,
+        const unsigned int _instructionBufferSize
       ) : StatelessComponent(name, _clk, _reset, _enable)
     {
-      instructionSram = instructionSram;
+      instructionSram = _instructionSram;
       dataSram = _dataSram;
-      instructionBuffer.resize(DESCRIPTOR_INSTRUCTION_BUFFER_SIZE);
+      instructionStartOffset = _instructionStartOffset;
+      instructionBuffer.resize(_instructionBufferSize);
+      resetFn();
     }
 
 }; 

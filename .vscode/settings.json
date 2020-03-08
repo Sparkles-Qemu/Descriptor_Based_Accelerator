@@ -38,9 +38,11 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "typeinfo": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "string": "cpp"
     },
     "cSpell.words": [
         "unpause"
-    ]
+    ],
+    "inline-bookmarks.view.showVisibleFilesOnly": false
 }

@@ -27,6 +27,19 @@ struct SRAM
     SRAM(unsigned int _size)
     {
         memory.resize(_size);
+        sramSize = _size;
+    }
+
+    void programLoad(vector<DescriptorInstruction> prog, unsigned int offset)
+    {
+        assert(offset < memory.size() && (offset+prog.size()) < memory.size());
+        unsigned int index = offset;
+        for(auto val : prog)
+        {
+            set(index, val);
+            index = val.nextDescPtr;
+            assert(index < memory.size());
+        }
     }
 
     void load(vector<DataType> data, unsigned int offset)
@@ -35,7 +48,7 @@ struct SRAM
         int index = offset;
         for(auto val : data)
         {
-            memory.set(index, val);
+            set(index, val);
             index++;
         }
     }

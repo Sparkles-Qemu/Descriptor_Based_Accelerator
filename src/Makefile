@@ -4,7 +4,7 @@ TARGET=tb_generic_descriptor.cpp
 all: debug
 
 debug:
-	g++ -std=c++11 -g -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -o sim
+	g++ -std=c++11 -g -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -Wall -o sim
 release:
 	g++ -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -o sim
 clean:
