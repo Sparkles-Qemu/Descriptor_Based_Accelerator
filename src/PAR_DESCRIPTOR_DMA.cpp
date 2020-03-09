@@ -21,7 +21,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
 {
     //------------Local Variables Here---------------------
     enum class FetchState {INIT, IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
-    enum class ExecuteState {IDLE, ISSUE_2D_OP, ISSUE_1D_OP, GET_NEXT_INST, WAIT} executeState;
+    enum class ExecuteState {DECODE, STOP, TIMED_WAIT, ISSUE_2D_OP, ISSUE_1D_OP, SRAM_WAIT} executeState;
     unsigned int fetchWaitCounter;
     unsigned int executeWaitCounter;
     unsigned int fetchIndex;
@@ -55,16 +55,19 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         index++;
       }
     }
+
+    void incrementBufferIndex(unsigned int& index)
+    {
+      index = (index + 1) % instructionBuffer.size();
+    }
     
-    virtual void memoryOp()
+    virtual void moveData(ExecuteState& currentState, DescriptorInstruction& currentInstruction)
     {
 
     }
 
     void fetch()
     {
-
-
       switch(fetchState)
       {
         /**
@@ -141,7 +144,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
             DescriptorInstruction nextIns = instructionSram->get(nextDescriptorAddr);
             instructionBuffer.at(fetchIndex) = nextIns;
             prevFetchIndex = fetchIndex;
-            fetchIndex = (fetchIndex+1) % instructionBuffer.size();            
+            incrementBufferIndex(fetchIndex);
             if(abs(executeIndex-fetchIndex) > 0)
             {
               fetchState = FetchState::LOAD_INST_FROM_SRAM;
@@ -163,33 +166,135 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
       }
     }
 
+    void modifyXCounter(DescriptorInstruction& instruction)
+    {
+      instruction.xCount += instruction.xModify;
+    }
+
+    void modifyYCounter(DescriptorInstruction& instruction)
+    {
+      instruction.yCount += instruction.yModify;
+    }
+
+    void modifyXYCounter(DescriptorInstruction& instruction)
+    {
+      instruction.xCount += instruction.xModify;
+      instruction.yCount += instruction.yModify;
+    }
+
     void execute()
     {
+      static ExecuteState stateAfterWait;
+      DescriptorInstruction& currentIns = instructionBuffer.at(executeIndex);
+
       switch(executeState)
       {
-        case ExecuteState::IDLE:
-        break;
-        case ExecuteState::ISSUE_2D_OP:
-        break;
+        case ExecuteState::DECODE:
+        {
+          switch (currentIns.dmaConfig)
+          {
+            case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_WAIT:
+              executeState = ExecuteState::DECODE;
+              break;
+
+            case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_STOP:
+              executeState = ExecuteState::STOP;
+              break;
+            
+            case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_TIMED_WAIT:
+              executeState = ExecuteState::TIMED_WAIT;
+              break;
+            
+            case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_1D:
+              stateAfterWait = ExecuteState::ISSUE_1D_OP;
+              executeState = ExecuteState::SRAM_WAIT;
+              executeWaitCounter = sramResponseDelay;
+              break;
+
+            case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_2D:
+              stateAfterWait = ExecuteState::ISSUE_2D_OP;
+              executeState = ExecuteState::SRAM_WAIT;
+              executeWaitCounter = sramResponseDelay;
+              break;
+          }
+          break;
+        }
+        case ExecuteState::STOP:
+        {
+          executeState = ExecuteState::STOP;
+          break;
+        }
+        case ExecuteState::TIMED_WAIT:
+        {
+          modifyXCounter(currentIns);
+          if(currentIns.xCount == 0)
+          {
+            incrementBufferIndex(executeIndex);
+            executeState = ExecuteState::DECODE;
+          }
+          else
+          {
+            executeState = ExecuteState::TIMED_WAIT;
+          }
+          break;
+        }
         case ExecuteState::ISSUE_1D_OP:
-        break;
-        case ExecuteState::GET_NEXT_INST:
-        break;
-        case ExecuteState::WAIT:
-        break;
+        {
+          moveData(executeState, currentIns);
+          modifyXCounter(currentIns);          
+          if(currentIns.xCount == 0)
+          {
+            incrementBufferIndex(executeIndex);
+            executeState = ExecuteState::DECODE;
+          }
+          else
+          {
+            executeState = ExecuteState::ISSUE_1D_OP;
+          }
+          break;
+        }
+        case ExecuteState::ISSUE_2D_OP:
+        {
+          moveData(executeState, currentIns);
+          modifyXYCounter(currentIns);          
+          if(currentIns.xCount == 0 && currentIns.yCount == 0)
+          {
+            incrementBufferIndex(executeIndex);
+            executeState = ExecuteState::DECODE;
+          }
+          else
+          {
+            executeState = ExecuteState::ISSUE_2D_OP;
+          }
+          break;
+        }
+
+        case ExecuteState::SRAM_WAIT:
+        {
+          executeWaitCounter--;
+          if(executeWaitCounter == 0)
+          {
+            executeState = stateAfterWait;
+          }
+          else
+          {
+            executeState = ExecuteState::SRAM_WAIT;
+          }
+          break;
+        }        
       }
     }
 
     void computeFn()
     {
-      fetch();
       execute();
+      fetch();
     }
 
     void resetFn()
     {
       fetchState = FetchState::INIT;
-      executeState = ExecuteState::IDLE;
+      executeState = ExecuteState::DECODE;
       fetchIndex = 0;
       prevFetchIndex = (instructionBuffer.size()-1);
       executeIndex = 0;
@@ -213,9 +318,9 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
 
     void clearInstructionBuffer()
     {
-      for(auto descriptor : instructionBuffer)
+      for(auto descriptor = instructionBuffer.begin(); descriptor != instructionBuffer.end(); descriptor++)
       {
-        descriptor.clear();
+        descriptor->clear();
       }
     }
 

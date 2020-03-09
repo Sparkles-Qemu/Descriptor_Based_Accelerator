@@ -10,6 +10,14 @@ using std::endl;
 
 struct DescriptorInstruction
 {
+
+    static const unsigned int CONFIG_FLAG_ENABLED           = 0b000001;
+    static const unsigned int CONFIG_FLAG_STOP              = 0b000010;
+    static const unsigned int CONFIG_FLAG_TIMED_WAIT        = 0b000100;
+    static const unsigned int CONFIG_FLAG_ISSUE_1D          = 0b001000;
+    static const unsigned int CONFIG_FLAG_ISSUE_2D          = 0b010000;
+    static const unsigned int CONFIG_FLAG_WAIT              = 0b100000;
+
     sc_int<GLOBALS::SRAM_DATA_PRECISION> nextDescPtr;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> startAddr;
     sc_int<GLOBALS::SRAM_DATA_PRECISION> dmaConfig;
