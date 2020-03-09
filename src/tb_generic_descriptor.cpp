@@ -196,108 +196,110 @@ int sc_main(int argc, char *argv[])
     }
     
 
-    // /**
-    //  * Execute Test 1D and 2D
-    //  */
-    // reset = 0;
-    // sc_start(1, SC_NS);
+    /**
+     * Execute Test 1D and 2D
+     */
+    instructionPayload.clear();
+    instructionPayload.push_back(DescriptorInstruction(
+        1, // next descriptor
+        0, // start address
+        DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_1D, 
+        5, // xCount
+        1, // xModify
+        0, // yCount
+        0  // yModify  
+        ));            
+    instructionPayload.push_back(DescriptorInstruction(
+        2, // next descriptor
+        1, // start address
+        DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_2D, 
+        2, //xCount
+        1, //xModify
+        2, //yCount
+        1  //yModify  
+        )); 
+    instructionPayload.push_back(DescriptorInstruction(
+        3, // next descriptor
+        2, // start address
+        DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_2D, 
+        2, //xCount
+        1, //xModify
+        2, //yCount
+        1  //yModify  
+        ));     
+    instructionPayload.push_back(DescriptorInstruction(
+        4, // next descriptor
+        3, // start address
+        DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_1D, 
+        2, //xCount
+        1, //xModify
+        0, //yCount
+        0  //yModify  
+        )); 
+    instructionPayload.push_back(DescriptorInstruction(
+        4, // next descriptor
+        4, // start address
+        DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_STOP, 
+        0, //xCount
+        0, //xModify
+        0, //yCount
+        0  //yModify  
+        ));   
+    
+    instSRAM.programLoad(instructionPayload,0);
+    reset = 0;
+    sc_start(1, SC_NS);
 
-    // for (unsigned int simLoop = 0; simLoop < MAX_SIM_CYCLES; simLoop++)
-    // {
-    //     cout << "@ " << sc_time_stamp() << " Starting Simulation Cycle " << simLoop << endl;
+    for (unsigned int simLoop = 0; simLoop < MAX_SIM_CYCLES; simLoop++)
+    {
+        cout << "@ " << sc_time_stamp() << " Starting Simulation Cycle " << simLoop << endl;
 
-    //     /**
-    //      * Resetting Component
-    //      */
-    //     reset = 1;
-    //     cout << "@ " << sc_time_stamp() << " Asserting reset" << endl;
-    //     for (int i = 0; i < MAX_RESET_CYCLES; i++)
-    //     {
-    //         sc_start(1, SC_NS); 
-    //     }
-    //     cout << "@ " << sc_time_stamp() << " Deasserting reset" << endl;
-    //     reset = 0; 
+        /**
+         * Resetting Component
+         */
+        reset = 1;
+        cout << "@ " << sc_time_stamp() << " Asserting reset" << endl;
+        for (int i = 0; i < MAX_RESET_CYCLES; i++)
+        {
+            sc_start(1, SC_NS); 
+        }
+        cout << "@ " << sc_time_stamp() << " Deasserting reset" << endl;
+        reset = 0; 
 
-    //     /**
-    //      * Start Magic load
-    //      */
-    //     // Enable Component
-    //     enable = 1;
-    //     sc_start(1, SC_NS); 
-    //     pulse(clk);
+        /**
+         * Start Magic load
+         */
+        // Enable Component
+        enable = 1;
+        sc_start(1, SC_NS); 
+        pulse(clk);
 
-    //     /**
-    //      * Validate Magic Load
-    //      */
-    //     cout << "@ " << sc_time_stamp() << " Magic Load Test" << endl;
-    //     for (unsigned int i = 0, index = 0; i < parallelDma.instructionBuffer.size(); index = instructionPayload.at(i).nextDescPtr, i++)
-    //     {       
-    //         assert(instSRAM.get(index) == parallelDma.instructionBuffer.at(i));
-    //         assert(parallelDma.instructionBuffer.at(i) == instructionPayload.at(i));
-    //     }
-    //     assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
-    //     cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
+        /**
+         * Validate Magic Load
+         */
+        cout << "@ " << sc_time_stamp() << " Magic Load Test" << endl;
+        for (unsigned int i = 0, index = 0; i < parallelDma.instructionBuffer.size(); index = instructionPayload.at(i).nextDescPtr, i++)
+        {       
+            assert(instSRAM.get(index) == parallelDma.instructionBuffer.at(i));
+            assert(parallelDma.instructionBuffer.at(i) == instructionPayload.at(i));
+        }
+        assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+        cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
 
         
-    //     /**
-    //     * Start New Instruction Load Test
-    //     */
+        /**
+        * Start DataMoveTest
+        */
+        cout << "@ " << sc_time_stamp() << " Start Data Move Test " << endl;
+        while(parallelDma.executeState != DefaultParallelDMA::ExecuteState::STOP)
+        {
+            pulse(clk);
+        }
 
-    //     cout << "@ " << sc_time_stamp() << " Instruction Load Test" << endl;
+        assert(15 == parallelDma.moveDataStats);
+        cout << "@ " << sc_time_stamp() << " Data Move Test Pass! ... " << endl;
 
-    //     // load all instructions other than the first few that were magically loaded
-    //     // internal buffer. 
-    //     unsigned int lastExecute;
-    //     unsigned int fetchedInstructionIndex = parallelDma.instructionBuffer.size();
-    //     for (unsigned int fetchCycle = 0; fetchCycle < instructionPayload.size()-parallelDma.instructionBuffer.size(); fetchCycle++)
-    //     {
-            
-    //         cout << "@ " << sc_time_stamp() << " Buffer Contents" << endl;
-    //         parallelDma.printSpecial();
-
-    //         if(fetchCycle == 0)
-    //         {
-    //             // Increment executeIndex to trigger fetch operations
-    //             lastExecute = parallelDma.executeIndex;
-    //             assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
-    //             pulse(clk);
-    //             pulse(clk);
-    //             pulse(clk);
-    //         }
-
-    //         assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::LOAD_INST_FROM_SRAM);
-
-    //         pulse(clk);
-
-    //         assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::WAIT);
-
-    //         pulse(clk);
-
-    //         assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::STORE_INST_TO_BUFFER);
-
-    //         pulse(clk);
-
-    //         assert(parallelDma.instructionBuffer.at(lastExecute) == instructionPayload.at(fetchedInstructionIndex));
-    //         fetchedInstructionIndex++;
-
-    //         lastExecute = (lastExecute + 1) % parallelDma.instructionBuffer.size();
-
-    //     }
-
-    //     pulse(clk);
-    //     pulse(clk);
-    //     pulse(clk);
-        
-    //     cout << "@ " << sc_time_stamp() << " Buffer Contents" << endl;
-    //     parallelDma.printSpecial();
-
-    //     assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
-
-    //     assert(parallelDma.executeIndex == parallelDma.fetchIndex);
-        
-    //     cout << "@ " << sc_time_stamp() << " Instruction Load Test Pass!" << endl;
-        
-    // }
+    }
 
     /**
     * Test Final Async Reset

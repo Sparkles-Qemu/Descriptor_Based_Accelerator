@@ -21,7 +21,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
 {
     //------------Local Variables Here---------------------
     enum class FetchState {INIT, IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
-    enum class ExecuteState {DECODE, STOP, TIMED_WAIT, ISSUE_2D_OP, ISSUE_1D_OP, SRAM_WAIT} executeState;
+    enum class ExecuteState {DECODE, STOP, TIMED_WAIT, ISSUE_2D_OP, ISSUE_1D_OP} executeState;
     unsigned int fetchWaitCounter;
     unsigned int executeWaitCounter;
     unsigned int fetchIndex;
@@ -29,6 +29,9 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
     unsigned int executeIndex;
     unsigned int sramResponseDelay = GLOBALS::SRAM_RESPONSE_DELAY;
     unsigned int instructionStartOffset;
+    unsigned int moveDataStats = 0;
+    unsigned int xCount;
+    unsigned int yCount;
     vector<DescriptorInstruction> instructionBuffer;
     InstructionSRAM *instructionSram;
     SRAM<SramAddrPrecision, DataType > *dataSram;
@@ -61,9 +64,9 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
       index = (index + 1) % instructionBuffer.size();
     }
     
-    virtual void moveData(ExecuteState& currentState, DescriptorInstruction& currentInstruction)
+    virtual void moveData(ExecuteState& currentState, DescriptorInstruction& currentInstruction, unsigned int& xCount, unsigned int& yCount)
     {
-
+      moveDataStats++;
     }
 
     void fetch()
@@ -166,25 +169,8 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
       }
     }
 
-    void modifyXCounter(DescriptorInstruction& instruction)
-    {
-      instruction.xCount += instruction.xModify;
-    }
-
-    void modifyYCounter(DescriptorInstruction& instruction)
-    {
-      instruction.yCount += instruction.yModify;
-    }
-
-    void modifyXYCounter(DescriptorInstruction& instruction)
-    {
-      instruction.xCount += instruction.xModify;
-      instruction.yCount += instruction.yModify;
-    }
-
     void execute()
     {
-      static ExecuteState stateAfterWait;
       DescriptorInstruction& currentIns = instructionBuffer.at(executeIndex);
 
       switch(executeState)
@@ -206,15 +192,14 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
               break;
             
             case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_1D:
-              stateAfterWait = ExecuteState::ISSUE_1D_OP;
-              executeState = ExecuteState::SRAM_WAIT;
-              executeWaitCounter = sramResponseDelay;
+              executeState = ExecuteState::ISSUE_1D_OP;
+              xCount = 0;
               break;
 
             case DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_2D:
-              stateAfterWait = ExecuteState::ISSUE_2D_OP;
-              executeState = ExecuteState::SRAM_WAIT;
-              executeWaitCounter = sramResponseDelay;
+              executeState = ExecuteState::ISSUE_2D_OP;
+              xCount = 0;
+              yCount = 0;
               break;
           }
           break;
@@ -226,7 +211,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         }
         case ExecuteState::TIMED_WAIT:
         {
-          modifyXCounter(currentIns);
+          currentIns.xCount += currentIns.xModify;
           if(currentIns.xCount == 0)
           {
             incrementBufferIndex(executeIndex);
@@ -239,10 +224,10 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
           break;
         }
         case ExecuteState::ISSUE_1D_OP:
-        {
-          moveData(executeState, currentIns);
-          modifyXCounter(currentIns);          
-          if(currentIns.xCount == 0)
+        {          
+          moveData(executeState, currentIns, xCount, yCount);
+          xCount += currentIns.xModify;
+          if(currentIns.xCount-1 == xCount)
           {
             incrementBufferIndex(executeIndex);
             executeState = ExecuteState::DECODE;
@@ -252,12 +237,17 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
             executeState = ExecuteState::ISSUE_1D_OP;
           }
           break;
-        }
+        } 
         case ExecuteState::ISSUE_2D_OP:
         {
-          moveData(executeState, currentIns);
-          modifyXYCounter(currentIns);          
-          if(currentIns.xCount == 0 && currentIns.yCount == 0)
+          moveData(executeState, currentIns, xCount, yCount);
+          xCount += currentIns.xModify;
+          if(currentIns.xCount == xCount)
+          {
+            yCount += currentIns.yModify;
+            xCount = 0;
+          }
+          if(currentIns.yCount == yCount)
           {
             incrementBufferIndex(executeIndex);
             executeState = ExecuteState::DECODE;
@@ -265,23 +255,9 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
           else
           {
             executeState = ExecuteState::ISSUE_2D_OP;
-          }
+          }          
           break;
-        }
-
-        case ExecuteState::SRAM_WAIT:
-        {
-          executeWaitCounter--;
-          if(executeWaitCounter == 0)
-          {
-            executeState = stateAfterWait;
-          }
-          else
-          {
-            executeState = ExecuteState::SRAM_WAIT;
-          }
-          break;
-        }        
+        }   
       }
     }
 
@@ -298,6 +274,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
       fetchIndex = 0;
       prevFetchIndex = (instructionBuffer.size()-1);
       executeIndex = 0;
+      moveDataStats = 0;
       clearInstructionBuffer();
     }
 
