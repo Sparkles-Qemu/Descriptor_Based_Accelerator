@@ -1,10 +1,10 @@
 WORKING_DIR:=$(shell pwd)
-TARGET=tb_PE.cpp
+TARGET=tb_PMM2S_DESCRIPTOR.cpp
 
 all: debug
 
 debug:
-	g++ -std=c++11 -g -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -Wall -o sim
+	g++ -E -std=c++11 -g -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -Wall -o sim
 release:
 	g++ -I. -I./systemc/include -L. -Lsystemc/lib-linux64 -lsystemc -lm -Wl,-rpath,./systemc/lib-linux64 $(TARGET) -o sim
 clean:

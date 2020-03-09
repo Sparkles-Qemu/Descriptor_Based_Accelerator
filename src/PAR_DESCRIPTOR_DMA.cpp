@@ -168,7 +168,7 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
         }
       }
     }
-
+    
     void execute()
     {
       DescriptorInstruction& currentIns = instructionBuffer.at(executeIndex);

@@ -80,7 +80,7 @@ int sc_main(int argc, char *argv[])
                 ));            
         }
     }
-    instSRAM.programLoad(instructionPayload,0);
+    instSRAM.programLoad(instructionPayload,firstInstructionOffset);
 
     /**
      * Checking Contents of SRAM
@@ -250,7 +250,7 @@ int sc_main(int argc, char *argv[])
         0  //yModify  
         ));   
     
-    instSRAM.programLoad(instructionPayload,0);
+    instSRAM.programLoad(instructionPayload,firstInstructionOffset);
     reset = 0;
     sc_start(1, SC_NS);
 
