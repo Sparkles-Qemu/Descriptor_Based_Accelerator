@@ -11,7 +11,7 @@ using std::vector;
 
 #define MAX_RESET_CYCLES 10
 #define MAX_SIM_CYCLES 2
-#define MAX_INSTRUCTION_SEPERATION 20
+#define MAX_INSTRUCTION_SEPERATION 1
 #define INSTRUCTION_PAYLOAD_SIZE 5
 
 void pulse(sc_signal<bool>& clk)
@@ -133,12 +133,10 @@ int sc_main(int argc, char *argv[])
         }
         assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
         cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
-
         
         /**
         * Start New Instruction Load Test
         */
-
         cout << "@ " << sc_time_stamp() << " Instruction Load Test" << endl;
 
         // load all instructions other than the first few that were magically loaded
@@ -156,6 +154,8 @@ int sc_main(int argc, char *argv[])
                 // Increment executeIndex to trigger fetch operations
                 lastExecute = parallelDma.executeIndex;
                 assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+                // Allow Fetch State machine to realize that the execute index
+                // has changed and that it needs to fetch a new instruction
                 pulse(clk);
                 pulse(clk);
                 pulse(clk);
@@ -180,6 +180,10 @@ int sc_main(int argc, char *argv[])
 
         }
 
+        /**
+         * Allow fetch state machine to save last Descriptor 
+         * 
+         */
         pulse(clk);
         pulse(clk);
         pulse(clk);

@@ -33,7 +33,7 @@ int sc_main(int argc, char *argv[])
     /**
      * Component Decleration
      */
-    PE<GLOBALS::PE_OPERAND_PRECISION, GLOBALS::PE_ACCUMULATION_PRECISION> pe1("pe1", clk, reset, enable, psumIn, pixelIn0, psumOut);
+    PE<sc_int<GLOBALS::PE_OPERAND_PRECISION>, sc_int<GLOBALS::PE_ACCUMULATION_PRECISION>> pe1("pe1", clk, reset, enable, psumIn, pixelIn0, psumOut);
 
     /**
      * Loading a weight into a PE

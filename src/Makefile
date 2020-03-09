@@ -1,5 +1,5 @@
 WORKING_DIR:=$(shell pwd)
-TARGET=tb_generic_descriptor.cpp
+TARGET=tb_PE.cpp
 
 all: debug
 

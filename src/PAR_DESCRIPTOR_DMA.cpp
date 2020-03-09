@@ -321,6 +321,22 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
     {
     }
 
+    /**
+     * @brief Construct a new par descriptor dma object
+     * 
+     * @param name 
+     * @param _clk 
+     * @param _reset 
+     * @param _enable 
+     * @param _instructionSram Default for all parallel descriptor dmas
+     * @param _dataSram Rely on type checking from compiler by defining the right
+     * data type in paralleldma template. Useful for making sure you're passing
+     * the right pointer. 
+     * @param _instructionStartOffset Where to start looking in instruction sram
+     * for the first instruction. 
+     * @param _instructionBufferSize Size of internal descriptor dma buffer. If
+     * specified will default to default value specified in GLOBAL.cpp 
+     */
     PAR_DESCRIPTOR_DMA(
         ::sc_core::sc_module_name name, 
         const sc_signal<bool>& _clk, 

@@ -8,18 +8,18 @@
 #include "COMPONENT.cpp"
 #include "GLOBALS.cpp"
 
-template <int PE_OPERAND_PRECISION, int PE_ACCUMULATION_PRECISION>
+template <typename InputDataType, typename OutputDataType>
 struct PE : StatelessComponent
 {
     //------------Define Globals Here---------------------
 
     //------------Define Ports Here---------------------
-    sc_in<sc_int<PE_ACCUMULATION_PRECISION> > psumIn;
-    sc_in<sc_int<PE_OPERAND_PRECISION> > pixelIn0;
-    sc_out<sc_int<PE_ACCUMULATION_PRECISION> > psumOut;
+    sc_in<InputDataType > psumIn;
+    sc_in<InputDataType > pixelIn0;
+    sc_out<OutputDataType > psumOut;
 
     //------------Local Variables Here---------------------
-    sc_uint<PE_OPERAND_PRECISION>  current_weight;
+    InputDataType  current_weight;
 
     //------------Define Functions Here---------------------
     void computeFn()
@@ -38,9 +38,9 @@ struct PE : StatelessComponent
         const sc_signal<bool>& _clk, 
         const sc_signal<bool>& _reset, 
         const sc_signal<bool>& _enable,
-        const sc_signal<sc_int<PE_ACCUMULATION_PRECISION> >& _psumIn,
-        const sc_signal<sc_int<PE_OPERAND_PRECISION> >& _pixelIn0,
-        sc_signal<sc_int<PE_ACCUMULATION_PRECISION> >& _psumOut
+        const sc_signal<InputDataType >& _psumIn,
+        const sc_signal<InputDataType >& _pixelIn0,
+        sc_signal<OutputDataType >& _psumOut
       ) : StatelessComponent(name, _clk, _reset, _enable)
     {
       this->psumIn(_psumIn);

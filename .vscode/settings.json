@@ -45,5 +45,5 @@
     "cSpell.words": [
         "unpause"
     ],
-    "inline-bookmarks.view.showVisibleFilesOnly": false
+    "inline-bookmarks.view.showVisibleFilesOnly": true
 }
