@@ -1,8 +1,8 @@
 #include "systemc.h"
 #include "SRAM.cpp"
+#include "DESCRIPTOR_INSTRUCTION.cpp"
 #include "PMM2S_DESCRIPTOR.cpp"
 #include "GLOBALS.cpp"
-#include "DESCRIPTOR_INSTRUCTION.cpp"
 #include <assert.h>
 
 using std::cout;
@@ -41,6 +41,11 @@ int sc_main(int argc, char *argv[])
     InstructionSRAM instSRAM;
     DefaultDataSRAM dataSRAM;
 
+    for (unsigned int i = 0; i < dataSRAM.sramSize; i++)
+    {
+        dataSRAM.set(i, i+1);
+    }
+
     /**
      * Component Decleration
      * Default Parallel Descriptor DMA,
@@ -48,7 +53,7 @@ int sc_main(int argc, char *argv[])
      * of different address precision or data type, compiler will fail. 
      */
     const unsigned int firstInstructionOffset = 0;
-    DefaultPMM2S parallelDma("PMM2S_Descriptor",clk, reset, enable, &instSRAM, &dataSRAM, outputStream, firstInstructionOffset, GLOBALS::DESCRIPTOR_INSTRUCTION_BUFFER_SIZE);
+    DefaultPMM2S parallelDma("PMM2S_Descriptor",clk, reset, enable, &instSRAM, &dataSRAM, outputStream, firstInstructionOffset);
 
     /**
      * Loading Descriptors into SRAM starting at Index 0
@@ -59,9 +64,10 @@ int sc_main(int argc, char *argv[])
      * Execute Test 1D and 2D
      */
     instructionPayload.clear();
+    //@todo figure out why the addresses stop at 4 and not 5 in 1D 
     instructionPayload.push_back(DescriptorInstruction(
         1, // next descriptor
-        100, // start address
+        0, // start address
         DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_1D, 
         5, // xCount
         1, // xModify
@@ -70,7 +76,7 @@ int sc_main(int argc, char *argv[])
         ));            
     instructionPayload.push_back(DescriptorInstruction(
         2, // next descriptor
-        100, // start address
+        0, // start address
         DescriptorInstruction::CONFIG_FLAG_ENABLED | DescriptorInstruction::CONFIG_FLAG_ISSUE_2D, 
         2, //xCount
         1, //xModify
@@ -87,6 +93,16 @@ int sc_main(int argc, char *argv[])
         0  //yModify  
         ));   
     
+    /**
+     * Setting up tracing. Time unit set to 500 for async reset done later
+     */
+    sc_trace_file *wf = sc_create_vcd_trace_file("./src/traces/sim_signals.trace");
+    wf->set_time_unit(500, sc_core::SC_PS);
+    sc_trace(wf, clk, "clk");
+    sc_trace(wf, reset, "reset");
+    sc_trace(wf, enable, "enable");
+    sc_trace(wf, outputStream, "outputStream");    
+
     instSRAM.programLoad(instructionPayload, firstInstructionOffset);
     reset = 0;
     sc_start(1, SC_NS);
@@ -124,7 +140,7 @@ int sc_main(int argc, char *argv[])
             assert(instSRAM.get(index) == parallelDma.instructionBuffer.at(i));
             assert(parallelDma.instructionBuffer.at(i) == instructionPayload.at(i));
         }
-        assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+        assert(parallelDma.fetchState == FetchState::IDLE);
         cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
 
         
@@ -132,12 +148,13 @@ int sc_main(int argc, char *argv[])
         * Start DataMoveTest
         */
         cout << "@ " << sc_time_stamp() << " Start Data Move Test " << endl;
-        while(parallelDma.executeState != DefaultParallelDMA::ExecuteState::STOP)
+        while(parallelDma.executeState != ExecuteState::STOP)
         {
             pulse(clk);
+            cout << "@ " << sc_time_stamp() << " OutputStream : " << outputStream.read() << endl;
+            //@todo add assertion test here for output stream output
         }
 
-        assert(15 == parallelDma.moveDataStats);
         cout << "@ " << sc_time_stamp() << " Data Move Test Pass! ... " << endl;
 
     }

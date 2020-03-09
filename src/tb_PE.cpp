@@ -110,6 +110,7 @@ int sc_main(int argc, char *argv[])
     sc_start(1.5, SC_NS);
     
     cout << "@ " << sc_time_stamp() << " Sim complete, Simulation terminating .... " << endl;
+    sc_close_vcd_trace_file(wf);
 
 
     return 0; // Terminate simulation

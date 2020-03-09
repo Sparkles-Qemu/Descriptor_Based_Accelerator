@@ -9,13 +9,14 @@
 #include "GLOBALS.cpp"
 #include "assert.h"
 #include "DESCRIPTOR_INSTRUCTION.cpp"
+#include <typeinfo>
 
 using std::vector;
 
 template <int SRAM_ADDR_PRECISION, typename DataType>
 struct SRAM
 {
-    int sramSize = GLOBALS::SRAM_DEFAULT_SIZE;
+    unsigned int sramSize = GLOBALS::SRAM_DEFAULT_SIZE;
 
     vector<DataType> memory;
 

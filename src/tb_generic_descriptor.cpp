@@ -131,7 +131,7 @@ int sc_main(int argc, char *argv[])
             assert(instSRAM.get(index) == parallelDma.instructionBuffer.at(i));
             assert(parallelDma.instructionBuffer.at(i) == instructionPayload.at(i));
         }
-        assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+        assert(parallelDma.fetchState == FetchState::IDLE);
         cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
         
         /**
@@ -153,7 +153,7 @@ int sc_main(int argc, char *argv[])
             {
                 // Increment executeIndex to trigger fetch operations
                 lastExecute = parallelDma.executeIndex;
-                assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+                assert(parallelDma.fetchState == FetchState::IDLE);
                 // Allow Fetch State machine to realize that the execute index
                 // has changed and that it needs to fetch a new instruction
                 pulse(clk);
@@ -161,15 +161,15 @@ int sc_main(int argc, char *argv[])
                 pulse(clk);
             }
 
-            assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::LOAD_INST_FROM_SRAM);
+            assert(parallelDma.fetchState == FetchState::LOAD_INST_FROM_SRAM);
 
             pulse(clk);
 
-            assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::WAIT);
+            assert(parallelDma.fetchState == FetchState::WAIT);
 
             pulse(clk);
 
-            assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::STORE_INST_TO_BUFFER);
+            assert(parallelDma.fetchState == FetchState::STORE_INST_TO_BUFFER);
 
             pulse(clk);
 
@@ -191,7 +191,7 @@ int sc_main(int argc, char *argv[])
         cout << "@ " << sc_time_stamp() << " Buffer Contents" << endl;
         parallelDma.printSpecial();
 
-        assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+        assert(parallelDma.fetchState == FetchState::IDLE);
 
         assert(parallelDma.executeIndex == parallelDma.fetchIndex);
         
@@ -287,7 +287,7 @@ int sc_main(int argc, char *argv[])
             assert(instSRAM.get(index) == parallelDma.instructionBuffer.at(i));
             assert(parallelDma.instructionBuffer.at(i) == instructionPayload.at(i));
         }
-        assert(parallelDma.fetchState == DefaultParallelDMA::FetchState::IDLE);
+        assert(parallelDma.fetchState == FetchState::IDLE);
         cout << "@ " << sc_time_stamp() << " Magic Load Pass!" << endl;
 
         
@@ -295,7 +295,7 @@ int sc_main(int argc, char *argv[])
         * Start DataMoveTest
         */
         cout << "@ " << sc_time_stamp() << " Start Data Move Test " << endl;
-        while(parallelDma.executeState != DefaultParallelDMA::ExecuteState::STOP)
+        while(parallelDma.executeState != ExecuteState::STOP)
         {
             pulse(clk);
         }

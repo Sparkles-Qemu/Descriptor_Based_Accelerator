@@ -16,12 +16,15 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+enum class FetchState {INIT, IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER};
+enum class ExecuteState {DECODE, STOP, TIMED_WAIT, ISSUE_2D_OP, ISSUE_1D_OP};
+
 template <int SramAddrPrecision, typename DataType>
 struct PAR_DESCRIPTOR_DMA : StatelessComponent
 {
     //------------Local Variables Here---------------------
-    enum class FetchState {INIT, IDLE, LOAD_INST_FROM_SRAM, WAIT, STORE_INST_TO_BUFFER} fetchState;
-    enum class ExecuteState {DECODE, STOP, TIMED_WAIT, ISSUE_2D_OP, ISSUE_1D_OP} executeState;
+    FetchState fetchState;
+    ExecuteState executeState;
     unsigned int fetchWaitCounter;
     unsigned int executeWaitCounter;
     unsigned int fetchIndex;
@@ -267,7 +270,11 @@ struct PAR_DESCRIPTOR_DMA : StatelessComponent
       fetch();
     }
 
-    void resetFn()
+    //@todo make virtual and test tb_generic_descriptor with virtual to make
+    // that it calls the default first. Then override in base to add
+    // outputstream clean.
+
+    void resetFn() 
     {
       fetchState = FetchState::INIT;
       executeState = ExecuteState::DECODE;

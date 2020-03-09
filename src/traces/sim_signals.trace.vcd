@@ -1,5 +1,5 @@
 $date
-     Mar 09, 2020       14:26:36
+     Mar 09, 2020       16:54:32
 $end
 
 $version
@@ -9,9 +9,8 @@ $end
 $scope module SystemC $end
 $var wire    1  aaa  clk       $end
 $var wire    1  aab  reset       $end
-$var wire   32  aac  psumIn [31:0]  $end
-$var wire   32  aad  pixelIn0 [31:0]  $end
-$var wire   32  aae  psumOut [31:0]  $end
+$var wire    1  aac  enable       $end
+$var wire   32  aad  outputStream [31:0]  $end
 $upscope $end
 $enddefinitions  $end
 
@@ -22,9 +21,8 @@ $end
 $dumpvars
 0aaa
 0aab
-b0 aac
+0aac
 b0 aad
-b0 aae
 $end
 
 #2
@@ -32,95 +30,174 @@ $end
 
 #22
 0aab
-b1 aac
-b1 aad
+1aac
+
+#24
+1aaa
 
 #26
-1aaa
-b11 aae
+0aaa
 
 #28
-0aaa
-b10 aac
-b10 aad
+1aaa
 
 #30
-1aaa
-b110 aae
+0aaa
 
 #32
-0aaa
-b11 aac
-b11 aad
+1aaa
+b1 aad
 
 #34
-1aaa
-b1001 aae
+0aaa
 
 #36
-0aaa
-b100 aac
-b100 aad
+1aaa
+b10 aad
 
 #38
-1aaa
-b1100 aae
+0aaa
 
 #40
-0aaa
-b101 aac
-b101 aad
+1aaa
+b11 aad
 
 #42
-1aaa
-b1111 aae
+0aaa
 
 #44
-0aaa
-b110 aac
-b110 aad
+1aaa
+b100 aad
 
 #46
-1aaa
-b10010 aae
+0aaa
 
 #48
-0aaa
-b111 aac
-b111 aad
+1aaa
 
 #50
-1aaa
-b10101 aae
+0aaa
 
 #52
-0aaa
-b1000 aac
-b1000 aad
+1aaa
+b1 aad
 
 #54
-1aaa
-b11000 aae
+0aaa
 
 #56
-0aaa
-b1001 aac
-b1001 aad
+1aaa
+b10 aad
 
 #58
-1aaa
-b11011 aae
+0aaa
 
 #60
-0aaa
-b1010 aac
-b1010 aad
+1aaa
+b11 aad
 
 #62
-1aaa
-b11110 aae
+0aaa
 
-#67
+#64
+1aaa
+b100 aad
+
+#66
+0aaa
+
+#68
+1aaa
+
+#70
+0aaa
+
+#72
 1aab
-b0 aae
+
+#92
+0aab
+
+#94
+1aaa
+
+#96
+0aaa
+
+#98
+1aaa
+
+#100
+0aaa
+
+#102
+1aaa
+b1 aad
+
+#104
+0aaa
+
+#106
+1aaa
+b10 aad
+
+#108
+0aaa
+
+#110
+1aaa
+b11 aad
+
+#112
+0aaa
+
+#114
+1aaa
+b100 aad
+
+#116
+0aaa
+
+#118
+1aaa
+
+#120
+0aaa
+
+#122
+1aaa
+b1 aad
+
+#124
+0aaa
+
+#126
+1aaa
+b10 aad
+
+#128
+0aaa
+
+#130
+1aaa
+b11 aad
+
+#132
+0aaa
+
+#134
+1aaa
+b100 aad
+
+#136
+0aaa
+
+#138
+1aaa
+
+#140
+0aaa
+
+#145
+1aab
 
